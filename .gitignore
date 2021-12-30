@@ -3,6 +3,7 @@ input/*
 !input/input.example.csv
 out/*
 !input/input.example.csv
+.env
 
 # Generic Python gitignore
 # Byte-compiled / optimized / DLL files

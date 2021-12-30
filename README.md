@@ -18,6 +18,12 @@ all properly followed.
 
 ## Getting Started
 
+### Environment Variables
+Web3 connections are used to pull transaction fee data in this software.
+A `.env` file must be created; use `.env.example` as a template. 
+Any HTTP RPC provider may be used (GetBlock.io free-tier should suffice).
+Currently, ETH and BSC chains are able to be used by this software.
+
 ### Populate input csv file
 `input_RevA.csv` must be filled out. Each row represents a "transaction",
 with the understanding that some "transactions" may span multiple blockchain
@@ -26,6 +32,9 @@ be booked as a single "transaction").
 
 Individual rows may include Sell or Buy assets, and define fees.
 Details on a few non-intuitive columns:
+- **[Buy/Sell]SpotPrice/TotalUSD** - Either price of asset or total cost in USD
+  must be populated. Both should not be populated, but will prefer 
+  spot-price.
 - **IsOrdinaryIncome** - Set to `true` or `yes` if `Buy` asset is ordinary income.
   This will treat the value of the received asset (in USD) as ordinary income, 
   and track the asset as "bought" at the appropriate cost basis 
@@ -42,4 +51,10 @@ a populated input file.
 ```buildoutcfg
 yo@
 ```
+
+## Other
+
+## Helpful Links
+- web3py: https://web3py.readthedocs.io/en/stable/web3.eth.html
+- recommended web3 provider: https://getblock.io/
 
