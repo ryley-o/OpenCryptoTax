@@ -15,6 +15,8 @@ from subgraph_api import SubgraphQuery
 # # Temporary subgraph_api query examples
 # print(SubgraphQuery.get_eth_price_at_block(13708355))
 # print(SubgraphQuery.get_bnb_price_at_bsc_block(13736082))
+#
+# exit()
 
 LONG_TERM_CAP_GAIN_RATE_EST = 0.15  # estimate
 SHORT_TERM_CAP_GAIN_RATE_EST = 0.22  # estimate

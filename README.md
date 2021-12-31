@@ -49,7 +49,7 @@ Details on a few non-intuitive columns:
 simply run the following command to generate an out.csv and html file based on 
 a populated input file.
 ```buildoutcfg
-yo@
+TODO
 ```
 
 ## Other
@@ -59,7 +59,9 @@ The following links references different endpoints/dependencies
 related to this software.
 - web3py: https://web3py.readthedocs.io/en/stable/web3.eth.html
 - recommended web3 provider: https://getblock.io/
-- pancake swap subgraph endpoint explorer: https://bsc.streamingfast.io/subgraphs/name/pancakeswap/exchange-v2/graphql
-  - used for historical BNB prices (relative to BUSD)
+- pancake swap v2 subgraph endpoint explorer: https://bsc.streamingfast.io/subgraphs/name/pancakeswap/exchange-v2/graphql
+  - used for historical BNB prices after pancakeswap V2 launch (uses BUSD as proxy for USD)
+- pancake swap v1 subgraph endpoint explorer: https://api.thegraph.com/subgraphs/name/ehtec/pancake-subgraph-v1
+  - used for historical BNB prices before pancakeswap v2 (uses BUSD as proxy for USD)
 - uniswap v2 subgraph: https://thegraph.com/hosted-service/subgraph/uniswap/uniswap-v2
-  - used for historical ETH prices (relative to USDT)
+  - used for historical ETH prices (uses USDT as proxy for USD)
