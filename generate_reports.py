@@ -4,18 +4,21 @@ from datetime import datetime, timedelta
 from collections import OrderedDict
 from copy import deepcopy
 import dateparser
-from api import api
+from web3_api import Web3Query
+from subgraph_api import SubgraphQuery
 
-API = api.API()
-tx_hash = "0xe5e226fe713ff2931dc609601d013e04df5a9cdced0ee5b6a0d4e12f3fd4e610"
-print(API.get_tx_fee(tx_hash, "ETH"))
-tx_hash = "0x779b908460007c33e94cadf31d6d9f1aa25064c4135f0d3f524ceb74f1e267d6"
-print(API.get_tx_fee(tx_hash, "BSC"))
-
-exit()
+# # Temporary web3 query examples
+# tx_hash = "0xe5e226fe713ff2931dc609601d013e04df5a9cdced0ee5b6a0d4e12f3fd4e610"
+# print(Web3Query.get_tx_fee(tx_hash, "ETH"))
+# tx_hash = "0x779b908460007c33e94cadf31d6d9f1aa25064c4135f0d3f524ceb74f1e267d6"
+# print(Web3Query.get_tx_fee(tx_hash, "BSC"))
+# # Temporary subgraph_api query examples
+# print(SubgraphQuery.get_eth_price_at_block(13708355))
+# print(SubgraphQuery.get_bnb_price_at_bsc_block(13736082))
 
 LONG_TERM_CAP_GAIN_RATE_EST = 0.15  # estimate
 SHORT_TERM_CAP_GAIN_RATE_EST = 0.22  # estimate
+
 
 class Action:
 

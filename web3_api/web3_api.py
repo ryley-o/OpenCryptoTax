@@ -16,19 +16,25 @@ w3["BSC"] = Web3(Web3.HTTPProvider(HTTP_PROVIDER_BSC))
 w3["BSC"].middleware_onion.inject(geth_poa_middleware, layer=0)
 print(f"Current BSC block number: {w3['BSC'].eth.blockNumber}")
 
-class API:
+
+class Web3Query:
+
+    supportedChains = w3.keys()
 
     def __init__(self):
-        # initialize etherscan api
+        # initialize etherscan web3_api
         self.test = "test"
 
-    def get_tx_fee(self, tx_hash: str, chain: str):
+    @staticmethod
+    def get_tx_fee(tx_hash: str, chain: str):
         '''
         This function returns tx information given a tx_hash
         :param tx_hash: str hash of tx to retrieve
+        :param chain: str indicating which chain to query.
+                      supported chains defined in Web3Query.supportedChains
         :return: tbd
         '''
-        if not chain in w3.keys():
+        if chain not in Web3Query.supportedChains:
             raise KeyError(f"RPC for chain {chain} not supported!")
         # get gas used
         _tx_receipt = w3[chain].eth.get_transaction_receipt(tx_hash)

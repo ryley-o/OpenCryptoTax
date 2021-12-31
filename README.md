@@ -55,6 +55,11 @@ yo@
 ## Other
 
 ## Helpful Links
+The following links references different endpoints/dependencies 
+related to this software.
 - web3py: https://web3py.readthedocs.io/en/stable/web3.eth.html
 - recommended web3 provider: https://getblock.io/
-
+- pancake swap subgraph endpoint explorer: https://bsc.streamingfast.io/subgraphs/name/pancakeswap/exchange-v2/graphql
+  - used for historical BNB prices (relative to BUSD)
+- uniswap v2 subgraph: https://thegraph.com/hosted-service/subgraph/uniswap/uniswap-v2
+  - used for historical ETH prices (relative to USDT)
