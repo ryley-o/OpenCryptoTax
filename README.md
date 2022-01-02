@@ -32,18 +32,37 @@ be booked as a single "transaction").
 
 Individual rows may include Sell or Buy assets, and define fees.
 Details on a few non-intuitive columns:
-- **[Buy/Sell]SpotPrice/TotalUSD** - Either price of asset or total cost in USD
+- **[Buy/Sell]SpotPrice/TotalUSD** - Either spot price of asset or total cost in USD
   must be populated. Both should not be populated, but will prefer 
-  spot-price.
+  spot-price if both exist. If there is a buy and sell on line, one 
+  Buy/Sell `TotalUSD`
+  may be set to a special value of `equal` to indicate totals of buy
+  and sell should match (preventing double-entry of identical values)
 - **IsOrdinaryIncome** - Set to `true` or `yes` if `Buy` asset is ordinary income.
   This will treat the value of the received asset (in USD) as ordinary income, 
   and track the asset as "bought" at the appropriate cost basis 
   (`Spot Price` + any fees).
 - ***SpotPrice** - Price in USD of qty 1.00 of asset
+- ***BookFeeWith** - (may be blank if only either a buy or sell) Either 
+  `blank`, `buy`, `sell`, or `gas`.
+  If gas, must be no buy or sell, and will NOT include the fee in any asset cost
+  basis or sell fee. Will simply treat as a fee-less sale of ETH for USD, since
+  that is all some transactions do (i.e. failed bids, recalled bids, etc.).
 - **FeeChain[N]** - Chain of tx to get fee info from web, options are `ETH`, `BSC`
 - **FeeTx[N]** - tx hash to get fee info from web
 - **AuxFeeAsset** - Auxiliary fee paid in some asset defined here
 - **FeeUSD** - Any fees paid in USD
+
+#### Import Util
+A simple import helper util may help with populating the input.csv file.
+Currently, running `import_transactions.py` can automatically import (i.e. format)
+sushiswap `Swap ETH For Exact Tokens` and `Swap Exact Tokens For ETH`
+calls. `input/utils/import_swap_txs.example.csv` provides an example
+formatted list of transactions to import. The user must create a file
+`input/users/import_swap_txs.csv` to be loaded when running the command:
+```
+python import_transactions.py
+```
 
 ### Generate outputs
 simply run the following command to generate an out.csv and html file based on 
