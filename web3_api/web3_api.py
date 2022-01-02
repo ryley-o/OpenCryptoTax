@@ -100,6 +100,28 @@ class Exchange:
         self.method = method
 
 
+class PunkSummary:
+    def __init__(self, tx_hash: str, punk_id: int, val_eth: float):
+        self.tx_hash = tx_hash
+        self.punk_id = punk_id
+        self.val_eth = val_eth
+
+    @staticmethod
+    def col_headers():
+        return [
+            'tx_hash',
+            'punk_id',
+            'val_eth',
+        ]
+
+    def export_row(self):
+        return [
+            self.tx_hash,
+            self.punk_id,
+            self.val_eth
+        ]
+
+
 class Web3Query:
 
     supportedChains = w3.keys()
@@ -192,9 +214,6 @@ class Web3Query:
         :param exchange: Exchange which tx performed a swap on
         :return: tbd
         """
-        # if exchange not in Web3Query.supportedExchanges:
-        #     raise KeyError(f"exchange: {exchange} not supported! \n" +
-        #                    f"Must be one of {Web3Query.supportedExchanges}")
         try:
             # transaction
             _tx = w3[exchange.chain].eth.get_transaction(tx_hash)
@@ -244,3 +263,41 @@ class Web3Query:
                   "Ensure tx is a valid swap on a valid exchange. \n")
             raise e
         return None
+
+    @staticmethod
+    def get_punk_summary(tx_hash: str, method: str):
+        """
+        Returns a PunkSummary instance that gives additional info
+        about punk id and value of ether for txs interacting with
+        the ETH cryptopunks market.
+        :param tx_hash: str hash of tx to be examined
+        :param method: str Method called in cryptopunks market.
+                       currently supported methods are:
+                         - "Swap ETH For Exact Tokens"
+        :return: PunkSummary
+        """
+        try:
+            # transaction
+            # _tx = w3["ETH"].eth.get_transaction(tx_hash)
+            # receipt for logs
+            _tx_receipt = w3["ETH"].eth.get_transaction_receipt(tx_hash)
+            _logs = _tx_receipt.logs
+            if method == "Offer Punk For Sale":
+                val_eth = int(_logs[0]["data"], 16) / 1e18
+                print(_logs[0]['topics'][1])
+                punk_id = int.from_bytes(_logs[0]['topics'][1], "big")
+                # punk_id = int(_logs[0]['topics'][1], 16)
+                punk_summary = PunkSummary(
+                    tx_hash=tx_hash,
+                    punk_id=punk_id,
+                    val_eth=val_eth
+                )
+            return punk_summary
+        except ValueError as e:
+            print(f"Error while getting punk summary for tx:: {tx_hash}. \n" +
+                  f"Ensure tx method, {method}, is a supported interaction with punks contract. \n")
+            raise e
+        except UnboundLocalError as e:
+            print(f"Ensure tx method, {method}, is a supported interaction with punks contract.")
+        return None
+

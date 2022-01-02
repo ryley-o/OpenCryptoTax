@@ -3,7 +3,7 @@ input/*
 !input/input.example.csv
 out/*
 !input/input.example.csv
-!input/utils/import_swap_txs.example.csv
+!input/utils/*.example.csv
 .env
 
 # Generic Python gitignore

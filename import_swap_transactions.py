@@ -2,16 +2,7 @@ from web3_api import Web3Query, Exchange, SwapSummary
 import pandas as pd
 
 df = pd.read_csv(r'input/utils/import_swap_txs.csv', engine='python')
-df_out = pd.DataFrame(columns=SwapSummary.col_headers())
-
-
-def process_tx(tx: str):
-    """
-    returns a summary of tokens IN and tokens OUT
-    for a given swap tx.
-    :param tx: str e.g. '0x1234...def'
-    :return: TransactionSummary instance
-    """
+df_out = pd.DataFrame(columns=SwapSummary.swap_headers())
 
 
 for index, row in df.iterrows():

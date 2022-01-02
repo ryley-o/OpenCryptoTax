@@ -53,16 +53,36 @@ Details on a few non-intuitive columns:
 - **AuxFeeAsset** - Auxiliary fee paid in some asset defined here
 - **FeeUSD** - Any fees paid in USD
 
-#### Import Util
+#### Import Utils
+**Import Swap Transactions**
+```
+python import_swap_transactions.py
+```
+
 A simple import helper util may help with populating the input.csv file.
 Currently, running `import_transactions.py` can automatically import (i.e. format)
 sushiswap `Swap ETH For Exact Tokens` and `Swap Exact Tokens For ETH`
 calls. `input/utils/import_swap_txs.example.csv` provides an example
-formatted list of transactions to import. The user must create a file
-`input/users/import_swap_txs.csv` to be loaded when running the command:
+formatted list of transactions to import. 
+
+The user must create a file
+`input/users/import_swap_txs.csv` to be loaded when running the command.
+
+**Import (Summarize) CryptoPunk Transactions**
+```buildoutcfg
+python import_punk_transactions.py
 ```
-python import_transactions.py
-```
+
+A simple helper that shows more information about transactions on the CryptoPunks
+market for method calls to:
+- `Offer Punk For Sale`
+  - Exports which punk ID and asking price in ETH
+
+`input/utils/import_punk_txs.example.csv` provides an example
+formatted list of transactions to import. 
+
+The user must create a file
+`input/users/import_punk_txs.csv` to be loaded when running the command.
 
 ### Generate outputs
 simply run the following command to generate an out.csv and html file based on 
