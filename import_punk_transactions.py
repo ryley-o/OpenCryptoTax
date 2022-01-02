@@ -4,8 +4,9 @@ import pandas as pd
 df = pd.read_csv(r'input/utils/import_punk_txs.csv', engine='python')
 df_out = pd.DataFrame(columns=PunkSummary.col_headers())
 
-
+num_rows = df.shape[0]
 for index, row in df.iterrows():
+    print(f"...processing tx {index+1} of {num_rows}")
     _tx = row['tx']
     _method=row['method']
     _punk_summary = Web3Query.get_punk_summary(_tx, _method)
