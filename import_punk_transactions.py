@@ -10,7 +10,10 @@ for index, row in df.iterrows():
     _tx = row['tx']
     _method=row['method']
     _punk_summary = Web3Query.get_punk_summary(_tx, _method)
-    df_out.loc[len(df_out.index)] = _punk_summary.export_row()
+    if _punk_summary is not None:
+        df_out.loc[len(df_out.index)] = _punk_summary.export_row()
+    else:
+        print(f"Skipped Swap tx: {row['tx']}")
 
 _out_dir = r'out/utils/exported_punk_txs.csv'
 df_out.to_csv(_out_dir)

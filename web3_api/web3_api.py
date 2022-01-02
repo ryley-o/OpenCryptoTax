@@ -222,6 +222,9 @@ class Web3Query:
             _tx = w3[exchange.chain].eth.get_transaction(tx_hash)
             # receipt for logs and block (for time)
             _tx_receipt = w3[exchange.chain].eth.get_transaction_receipt(tx_hash)
+            if _tx_receipt["status"] == 0:
+                print(f"WARNING: tx {tx_hash} was reverted by EVM, skipping...")
+                return None
             _logs = _tx_receipt.logs
             _date_time = Web3Query.get_block_datetime(_tx_receipt.blockHash, exchange.chain)
             if exchange.name == "sushiswap" and exchange.chain == "ETH" and exchange.method == "Swap ETH For Exact Tokens":
@@ -285,6 +288,9 @@ class Web3Query:
             # _tx = w3["ETH"].eth.get_transaction(tx_hash)
             # receipt for logs
             _tx_receipt = w3["ETH"].eth.get_transaction_receipt(tx_hash)
+            if _tx_receipt["status"] == 0:
+                print(f"WARNING: tx {tx_hash} was reverted by EVM, skipping...")
+                return None
             _logs = _tx_receipt.logs
             if method == "Offer Punk For Sale" or method == "Offer Punk For Sale To Address":
                 val_eth = int(_logs[0]["data"], 16) / 1e18
