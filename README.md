@@ -77,6 +77,8 @@ A simple helper that shows more information about transactions on the CryptoPunk
 market for method calls to:
 - `Offer Punk For Sale`
   - Exports which punk ID and asking price in ETH
+- `Offer Punk For Sale To Address`
+  - Exports which punk ID, asking price in ETH, and address offered to
 
 `input/utils/import_punk_txs.example.csv` provides an example
 formatted list of transactions to import. 

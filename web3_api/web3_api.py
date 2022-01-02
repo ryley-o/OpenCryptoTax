@@ -101,10 +101,11 @@ class Exchange:
 
 
 class PunkSummary:
-    def __init__(self, tx_hash: str, punk_id: int, val_eth: float):
+    def __init__(self, tx_hash: str, punk_id: int, val_eth: float, to_address: str):
         self.tx_hash = tx_hash
         self.punk_id = punk_id
         self.val_eth = val_eth
+        self.to_address = to_address
 
     @staticmethod
     def col_headers():
@@ -112,13 +113,15 @@ class PunkSummary:
             'tx_hash',
             'punk_id',
             'val_eth',
+            'to_address'
         ]
 
     def export_row(self):
         return [
             self.tx_hash,
             self.punk_id,
-            self.val_eth
+            self.val_eth,
+            self.to_address
         ]
 
 
@@ -273,7 +276,8 @@ class Web3Query:
         :param tx_hash: str hash of tx to be examined
         :param method: str Method called in cryptopunks market.
                        currently supported methods are:
-                         - "Swap ETH For Exact Tokens"
+                         - "Offer Punk For Sale"
+                         - "Offer Punk For Sale To Address"
         :return: PunkSummary
         """
         try:
@@ -282,15 +286,17 @@ class Web3Query:
             # receipt for logs
             _tx_receipt = w3["ETH"].eth.get_transaction_receipt(tx_hash)
             _logs = _tx_receipt.logs
-            if method == "Offer Punk For Sale":
+            if method == "Offer Punk For Sale" or method == "Offer Punk For Sale To Address":
                 val_eth = int(_logs[0]["data"], 16) / 1e18
-                print(_logs[0]['topics'][1])
                 punk_id = int.from_bytes(_logs[0]['topics'][1], "big")
-                # punk_id = int(_logs[0]['topics'][1], 16)
+                _to_address = ""
+                if method == "Offer Punk For Sale To Address":
+                    _to_address = '0x' + _logs[0]['topics'][2].hex()[-40:]
                 punk_summary = PunkSummary(
                     tx_hash=tx_hash,
                     punk_id=punk_id,
-                    val_eth=val_eth
+                    val_eth=val_eth,
+                    to_address=_to_address
                 )
             return punk_summary
         except ValueError as e:
