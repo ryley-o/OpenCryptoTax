@@ -93,6 +93,15 @@ a populated input file.
 TODO
 ```
 
+
+## TODO List
+- Write code that checks/validates/suggests fixes for input file (maybe excel?)
+- Write code that generates tx output summary for accountant input
+- Write code that generates above + final balances (for checking, and 
+  info that may go into decision making)
+- Write code that tracks & outputs tax liability for a given year, given
+  tax brackets for that year (not required, but helps quarterly estimates)
+
 ## Other
 
 ## Helpful Links
@@ -106,3 +115,6 @@ related to this software.
   - used for historical BNB prices before pancakeswap v2 (uses BUSD as proxy for USD)
 - uniswap v2 subgraph: https://thegraph.com/hosted-service/subgraph/uniswap/uniswap-v2
   - used for historical ETH prices (uses USDT as proxy for USD)
+
+## Potentially Helpful Tax Info/References
+- **defi lending/borrow/interest (US):** https://cryptotax.io/en-us/defi-taxes-borrowing-lending/
