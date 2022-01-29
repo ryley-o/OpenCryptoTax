@@ -53,7 +53,7 @@ Details on a few non-intuitive columns:
 - **AuxFeeAsset** - Auxiliary fee paid in some asset defined here
 - **FeeUSD** - Any fees paid in USD
 
-#### Import Utils
+#### Web3/Subgraph helper Utils
 **Import Swap Transactions**
 ```
 python import_swap_transactions.py
@@ -83,8 +83,36 @@ market for method calls to:
 `input/utils/import_punk_txs.example.csv` provides an example
 formatted list of transactions to import. 
 
-The user must create a file
-`input/users/import_punk_txs.csv` to be loaded when running the command.
+The user must create a file `input/users/import_punk_txs.csv` to be loaded when running the command.
+
+### Validate input file (generate valid input.csv)
+To generate a checked input file `./input/input_valid.csv`:
+
+```buildoutcfg
+python generate_valid_input_file.py ./input/<unchecked_input.[csv|xlsx] <xlsx tab name>
+```
+> tab name not required for csv file
+>
+> currently, input xlsx files are being used, csv behavior mostly unchecked
+
+Once you have what you think is a valid input.csv/xlsx file, this utility:
+- validates the input file
+  - expected values are correct formats, qty/spotprice/totals match within tolerance
+- generates a new input.csv file that contains all values filled out:
+  - shorthand format such as `equal` or whitespace in spot price/total filled in
+
+### TODO Generate Accountant Summary
+```buildoutcfg
+python generate_accountant_summary.py ./input/input_valid.csv
+```
+TODO
+
+## TODO Generate Accountant Summary + Current Balances
+```buildoutcfg
+python generate_accountant_summary_with_balances.py ./input/input_valid.csv
+```
+TODO
+
 
 ### Generate outputs
 simply run the following command to generate an out.csv and html file based on 
@@ -95,6 +123,7 @@ TODO
 
 
 ## TODO List
+(ALL CODE - YAY!)
 - Write code that checks/validates/suggests fixes for input file (maybe excel?)
 - Write code that generates tx output summary for accountant input
 - Write code that generates above + final balances (for checking, and 
