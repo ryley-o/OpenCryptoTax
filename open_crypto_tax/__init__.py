@@ -1,1 +1,1 @@
-from .core import Processor
+from .core import Validator

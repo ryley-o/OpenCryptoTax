@@ -90,8 +90,10 @@ To generate a checked input file `./input/input_valid.csv`:
 
 ```buildoutcfg
 python generate_valid_input_file.py ./input/<unchecked_input.[csv|xlsx] <xlsx tab name>
+// e.g.
+python generate_valid_input_file.py input/input.xlsx input
 ```
-> tab name not required for csv file
+> tab name not required
 >
 > currently, input xlsx files are being used, csv behavior mostly unchecked
 
