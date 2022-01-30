@@ -3,10 +3,12 @@ import numpy as np
 from pathlib import Path
 
 
+NUM_GAS_TX_ALLOWED = 14
+
+
 # This class validates an input csv/excel file and generates an
 # input_valid.csv file fully populated and able to be summarized.
 class Validator:
-    num_gas_tx_allowed = 14
 
     def __init__(self, unchecked_input: Path, sheet_name: str = "input", print_preview: bool = False):
         # load input file
@@ -37,7 +39,7 @@ class Validator:
                 fee_chain = [0]
                 fee_tx = [0]
                 fee_tx_gas_asset_price_override = [0]
-                for i in range(0, Validator.num_gas_tx_allowed):
+                for i in range(0, NUM_GAS_TX_ALLOWED):
                     fee_chain.append(row[f"FeeChain{i+1}"])
                     fee_tx.append(row[f"FeeTx{i+1}"])
                     fee_tx_gas_asset_price_override.append(row[f"FeeTx{i+1}GasAssetPriceOverride"])
@@ -137,7 +139,7 @@ class Validator:
                     if pd.isnull(book_fee_with):
                         raise LookupError(f"BookFeeWith must be defined for swap on line {line}")
                 # if no FeeChain defined for *any* FeeTx, fill it with ETH by default
-                for i in range(0, Validator.num_gas_tx_allowed):
+                for i in range(0, NUM_GAS_TX_ALLOWED):
                     if not pd.isnull(fee_tx[i+1]):
                         if pd.isnull(fee_chain[i+1]):
                             fee_chain[i+1] = "ETH"
@@ -155,7 +157,7 @@ class Validator:
                 self.df.loc[index, "BuyTotalUSD"] = buy_total_usd
                 # fees
                 self.df.loc[index, "BookFeeWith"] = book_fee_with
-                for i in range(0, Validator.num_gas_tx_allowed):
+                for i in range(0, NUM_GAS_TX_ALLOWED):
                     self.df.loc[index, f"FeeChain{i+1}"] = fee_chain[i+1]
                     self.df.loc[index, f"FeeTx{i+1}"] = fee_tx[i+1]
                     self.df.loc[index, f"FeeTx{i+1}GasAssetPriceOverride"] = fee_tx_gas_asset_price_override[i+1]
@@ -185,3 +187,27 @@ class Validator:
         self.df.to_csv(output_filename, index=False)
         print(f"[INFO] validated input file generated: {output_filename}")
 
+
+# This class processes a valid input csv file
+# It may generate one of several types of output
+class Processor:
+
+    def __init__(self, input_valid: Path, print_preview: bool = False):
+        # load input file
+        self.df = pd.read_csv(input_valid, engine='python')
+        if print_preview:
+            print(self.df)
+        pass
+
+    def process(self):
+        """
+        This processes loaded input data (looks up all fee tx, builds entire buy/sell basis sheet)
+        """
+        pass
+
+    def generate_tokentax_summary(self, output_file: Path):
+        """
+        This generates a TokenTax csv output file
+        :param output_file: Path TokenTax output file
+        """
+        pass

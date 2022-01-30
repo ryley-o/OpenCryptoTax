@@ -14,6 +14,5 @@ def main(_unchecked_input: Path, _sheet_name: str = "input"):
 
 argvs = sys.argv
 unchecked_input = Path(argvs[1])
-if len(argvs) == 3:
-    sheet_name = argvs[2] if len(argvs) == 3 else None
+sheet_name = argvs[2] if len(argvs) == 3 else None
 main(unchecked_input, sheet_name)

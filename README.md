@@ -1,20 +1,25 @@
 # OpenCryptoTax
 Free, open source software to potentially help crypto users 
 when preparing their taxes.
->Absolutely No Guarantee of accuracy is included with this software.
->Absolutely No Guarantee that software follows US or any other country's
->tax laws is included with this software.
+>Absolutely NO guarantee of accuracy is included with this software or documentation.
+>
+>Absolutely NO Tax or financial advice is included in this software or documentation.
+>
+>Absolutely NO information that this software gives as examples of tax calculation to help comply with US or any other country's
+>tax laws is shall be considered tax or financial advice whatsoever.
+>
+TLDR: Discuss everything with your accountant and don't trust this software to do anything.
 
 ### USE AT YOUR OWN RISK!
 
 ## Overview
-This repository is a custom software solution used to track/document/define
-taxes owed on assets such as cryptocurrency.
+This repository is a custom software solution used to help track/document/define
+relevant parameters related to taxes owed on assets such as cryptocurrency.
 
 ## Assumptions
 FIFO rules are used. Details such as properly including fees in basis
 prices, "selling" assets used to pay fees (e.g. pay gas fees in ETH) are
-all properly followed.
+all intended to be properly followed.
 
 ## Getting Started
 
@@ -103,15 +108,49 @@ Once you have what you think is a valid input.csv/xlsx file, this utility:
 - generates a new input.csv file that contains all values filled out:
   - shorthand format such as `equal` or whitespace in spot price/total filled in
 
-### TODO Generate Accountant Summary
+### TODO Generate TokenTax Summary
 ```buildoutcfg
-python generate_accountant_summary.py ./input/input_valid.csv
+python generate_tokentax_summary.py ./input/input_valid.csv
 ```
-TODO
+This command will turn a valid input file into a CSV compatible with TokenTax.
 
-## TODO Generate Accountant Summary + Current Balances
+TokenTax CSV specs are defined here: https://help.tokentax.co/en/articles/1707630-create-a-manual-csv-report-of-your-transactions
+
+This is the file you would want to send to your accountant, or use with TokenTax directly.
+
+The following is a list of likely "Type" categorization based on TokenTax's spec.
+**NONE OF THIS IS TAX ADVICE OR FINANCIAL ADVICE**
+
+| Condition / situation | TokenTax Type |
+| ----------------------| ------------- |
+| isOrdinaryIncome | Income [0] |
+| mining (business) | Buy [1] | 
+| swap/buy/sell | Trade |
+| gas (to be included in basis) | Totals listed in FeeAmount and FeeCurrency [2] [3] |
+| gas-only (not in any basis or trade fee) | Spend |
+| gift (from me to someone else) | Gift [4] |
+| gift (to me from someone else) | Trade [5] |
+
+>[0] includes events such as airdrops, hard forks, hobby mining, staking rewards, claimable LP rewards
+>
+>[1] business income tracked elsewhere, but personally treat as buying mined currency
+>
+>[2] if multiple fee currencies (e.g. ETH and USD), include USD in basis, making sure to track any asset sales used to pay for gas (e.g. pay ethereum gas fees in ETH *must* be tracked as sale of ETH) 
+>
+>[3] any relevant tx_hash(es) should be listed in comment json { "feeTxHashes": string[] }
+>
+>[4] leave buy blank, use sell fields, set exchange as "Gift"
+>
+>[5] my understanding is that Buy would be gift-giver's cost basis :)
+>
+>
+>
+
+gas transactions will be noted as 
+
+## TODO Generate TokenTax Summary + Current Balances
 ```buildoutcfg
-python generate_accountant_summary_with_balances.py ./input/input_valid.csv
+python generate_tokentax_summary_with_balances.py ./input/input_valid.csv
 ```
 TODO
 
