@@ -108,7 +108,9 @@ Once you have what you think is a valid input.csv/xlsx file, this utility:
 - generates a new input.csv file that contains all values filled out:
   - shorthand format such as `equal` or whitespace in spot price/total filled in
 
-### TODO Generate TokenTax Summary
+>Note: some items are still missed by the validator, but should be picked up 
+>by the code when generating a TokenTax summary XD
+### Generate TokenTax Summary
 ```buildoutcfg
 python generate_tokentax_summary.py ./input/input_valid.csv
 ```
@@ -148,7 +150,7 @@ The following is a list of likely "Type" categorization based on TokenTax's spec
 >
 >
 
-## TODO Generate TokenTax Summary + Current Balances
+## TODO Generate Current Balances from tokentax summary
 ```buildoutcfg
 python generate_tokentax_summary_with_balances.py ./input/input_valid.csv
 ```

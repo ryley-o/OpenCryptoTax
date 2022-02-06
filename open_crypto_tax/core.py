@@ -40,7 +40,7 @@ class ValidInputRow:
         # Gifts
         self.is_gift_from_me = row["IsGiftFromMe"]
         self.is_gift_to_me = row["IsGiftToMe"]
-        self.aux_gift_basis = row["GiftBasis"]
+        self.gift_basis_usd = row["GiftBasisUSD"]
         # Income types
         self.is_ordinary_income = row["IsOrdinaryIncome"]
         self.is_business_income_1 = row["IsBusinessIncome1"]
@@ -70,7 +70,7 @@ class Helpers:
     @staticmethod
     def get_tokentax_array(_type: str, buy_amount: float, buy_currency: str, sell_amount: float, sell_currency: str,
                          fee_amount: float, fee_currency: str, exchange: str, group: str, comment: str, date: str):
-        return [type, buy_amount, buy_currency, sell_amount, sell_currency, fee_amount, fee_currency,
+        return [_type, buy_amount, buy_currency, sell_amount, sell_currency, fee_amount, fee_currency,
                 exchange, group, comment, date]
 
 
@@ -214,7 +214,7 @@ class Validator:
                 # Gifts
                 self.df.loc[index, "IsGiftFromMe"] = r.is_gift_from_me
                 self.df.loc[index, "IsGiftToMe"] = r.is_gift_to_me
-                self.df.loc[index, "GiftBasis"] = r.aux_gift_basis
+                self.df.loc[index, "GiftBasisUSD"] = r.gift_basis_usd
                 # Income types
                 self.df.loc[index, "IsOrdinaryIncome"] = r.is_ordinary_income
                 self.df.loc[index, "IsBusinessIncome1"] = r.is_business_income_1
@@ -259,10 +259,11 @@ class Processor:
         self.df_tt = None  # tokentax formatted dataframe
 
     @staticmethod
-    def safe_get_total_tx_fee_and_currency(r: ValidInputRow):
+    def safe_get_total_tx_fee_and_currency(r: ValidInputRow, line: int):
         # bundle gas tx data
         fee_currency = None
         fee_qty = 0
+        fee_hashes = ""
         for i in range(0, NUM_GAS_TX_ALLOWED):
             _fee_chain = r.fee_chain[i+1]
             _fee_tx = r.fee_tx[i+1]
@@ -279,6 +280,7 @@ class Processor:
                 # print(f"[INFO] querying fee data for tx on {_fee_chain}: {_fee_tx}")
                 # we NEED a cache system here, 100%
                 fee_qty += Web3Query.get_tx_fee(_fee_tx, _fee_chain, False)
+                fee_hashes += _fee_chain + "-" + str(_fee_tx) + " | "
         # any usd fees
         if not pd.isnull(r.aux_usd_fee):
             if fee_qty > 0:
@@ -293,7 +295,11 @@ class Processor:
             fee_qty = r.aux_fee_qty
         if fee_currency is None:
             fee_currency = ""
-        return fee_qty, fee_currency
+            if (fee_qty == 0):
+                fee_qty = ""
+            else:
+                raise ValueError(f"fee_currency is None, but fee_qty is non-zero - HELP!")
+        return fee_qty, fee_currency, fee_hashes
 
 
     def process_tokentax(self):
@@ -313,31 +319,33 @@ class Processor:
                 # translate from row to one or more rows
                 # gas - categorize as gas-only, and it is a spend of ether for all gas TXs listed
                 if r.book_fee_with == "gas":
-                    fee_qty, fee_currency = self.safe_get_total_tx_fee_and_currency(r)
+                    fee_qty, fee_currency, fee_hashes = self.safe_get_total_tx_fee_and_currency(r, line)
+                    if (not pd.isnull(r.buy_qty)) or (not pd.isnull(r.sell_qty)):
+                        raise ValueError(f"gas row has non-null buy and/or sell qty on line: {line}")
                     # append bundled gas txs to summary
                     if fee_qty == 0:
                         print(f"[WARN] no gas fee transactions found on line {line} - SKIPPED LINE")
                     else:
-                        _comment = "gas fees unrelated to buy/sell"
-                        df_tt.loc[len(df_tt.index)] = Helpers.get_tokentax_array(_type="Trade",
-                                                                                 buy_amount=0,
+                        _comment = "gas fees unrelated to buy/sell - treat as spending gas asset. tx hashe(s): " + fee_hashes
+                        df_tt.loc[len(df_tt.index)] = Helpers.get_tokentax_array(_type="Spend",
+                                                                                 buy_amount="",
                                                                                  buy_currency="",
-                                                                                 sell_amount=0,
-                                                                                 sell_currency="",
-                                                                                 fee_amount=fee_qty,
-                                                                                 fee_currency=fee_currency,
+                                                                                 sell_amount=fee_qty,
+                                                                                 sell_currency=fee_currency,
+                                                                                 fee_amount="",
+                                                                                 fee_currency="",
                                                                                  exchange="",
                                                                                  group="",
                                                                                  comment=_comment,
                                                                                  date=date)
                         # ["Trade", 0, 0, 0, 0, fee_qty, fee_currency, 0, 0, "gas fees unrelated to buy/sell", date]
                 # business mining income - treat as a buy on my personal tokentax summary
-                if not pd.isnull(r.is_business_income_1):
+                elif not pd.isnull(r.is_business_income_1):
                     if not (r.is_business_income_1 == 1.0):
-                        raise ValueError(f"Unexpected business income 1 for line {line}")
+                        raise ValueError(f"Unexpected business income 1 value for line {line}")
                     # fees should be zero, but check anyway
-                    fee_qty, fee_currency = self.safe_get_total_tx_fee_and_currency(r)
-                    if not fee_qty == 0:
+                    fee_qty, fee_currency, _ = self.safe_get_total_tx_fee_and_currency(r, line)
+                    if not fee_qty == "":
                         print(f"[WARN] Jellyfish mining income non-zero - is something messed up? line {line}")
                     # append new summary row
                     _comment = "purchased from Jellyfish Mining upon receiving mining rewards. ref ETH tx_hash: " + str(r.other_tx_receipts)
@@ -352,8 +360,158 @@ class Processor:
                                                                              group="",
                                                                              comment=_comment,
                                                                              date=date)
+                # business income 2 - TODO not yet implemented
+                elif not pd.isnull(r.is_business_income_2):
+                    print(f"[WARN] handling of business income 2 not implemented - line: {line}")
+                # ordinary income - use type Income
+                elif not pd.isnull(r.is_ordinary_income):
+                    if not (r.is_ordinary_income == 1.0):
+                        raise ValueError(f"Unexpected ordinary income value for line {line}")
+                    if not (pd.isnull(r.sell_qty)):
+                        raise ValueError(f"Sell qty should be empty for income on line {line}")
+                    # total fees
+                    fee_qty, fee_currency, fee_hashes = self.safe_get_total_tx_fee_and_currency(r, line)
+                    # commend from source file
+                    _comment = "ordinary income - fee_tx_hashes: " + str(fee_hashes) + " - " + str(r.purchased_from)
+                    df_tt.loc[len(df_tt.index)] = Helpers.get_tokentax_array(_type="Income",
+                                                                             buy_amount=r.buy_qty,
+                                                                             buy_currency=r.buy_asset,
+                                                                             sell_amount="",
+                                                                             sell_currency="",
+                                                                             fee_amount=fee_qty,
+                                                                             fee_currency=fee_currency,
+                                                                             exchange="",
+                                                                             group="",
+                                                                             comment=_comment,
+                                                                             date=date)
+                # gift from someone else - treat as a buy at the cost basis of someone else
+                elif not pd.isnull(r.is_gift_to_me):
+                    if not (r.is_gift_to_me == 1.0):
+                        raise ValueError(f"Unexpected is_gift_to_me value for line {line}")
+                    # total fees should be ZERO for me
+                    fee_qty, fee_currency, fee_hashes = self.safe_get_total_tx_fee_and_currency(r, line)
+                    if not fee_qty == "":
+                        raise ValueError(f"Fees should be zero for gift to me on line {line}")
+                    if not (pd.isnull(r.sell_asset) and pd.isnull(r.sell_qty) and pd.isnull(r.buy_total_usd)):
+                        raise ValueError(
+                            f"Sell should be null and buy prices should be null - use gift_basis_usd USD on line {line}"
+                        )
+                    if pd.isnull(r.buy_qty):
+                        raise ValueError(f"Buy qty should be non-zero for gift on line {line}")
+                    # append line with a buy, cost basis the original giver's basis
+                    _comment = "Gift to me with original cost basis of " + str(r.gift_basis_usd) + " USD. " + \
+                               (str(r.purchased_from) or "")
+                    df_tt.loc[len(df_tt.index)] = Helpers.get_tokentax_array(_type="Trade",
+                                                                             buy_amount=r.buy_qty,
+                                                                             buy_currency=r.buy_asset,
+                                                                             sell_amount=r.gift_basis_usd,
+                                                                             sell_currency="USD",
+                                                                             fee_amount="",
+                                                                             fee_currency="",
+                                                                             exchange="",
+                                                                             group="",
+                                                                             comment=_comment,
+                                                                             date=date)
+                # per tokentax: gift to someone else from me - use sell fields, leave buy blank, set exchange as "Gift"
+                elif not pd.isnull(r.is_gift_from_me):
+                    if not (r.is_gift_from_me == 1.0):
+                        raise ValueError(f"Unexpected is_gift_from_me value for line {line}")
+                    # total fees
+                    fee_qty, fee_currency, fee_hashes = self.safe_get_total_tx_fee_and_currency(r, line)
+                    if not (pd.isnull(r.buy_asset) and pd.isnull(r.buy_qty) and pd.isnull(r.buy_total_usd)):
+                        raise ValueError(
+                            f"Buy should be null for gift from me on line {line}"
+                        )
+                    if pd.isnull(r.sell_qty):
+                        raise ValueError(f"Sell qty should be non-zero for gift from me on line {line}")
+                    # append line as instructed by tokentax
+                    _comment = "Gift from me. Filling out per tokentax recommended format. fee_hashes: " + \
+                               str(fee_hashes) + " - " + (str(r.purchased_from) or "")
+                    df_tt.loc[len(df_tt.index)] = Helpers.get_tokentax_array(_type="Gift",
+                                                                             buy_amount="",
+                                                                             buy_currency="",
+                                                                             sell_amount=r.sell_qty,
+                                                                             sell_currency=r.sell_asset,
+                                                                             fee_amount=fee_qty,
+                                                                             fee_currency=fee_currency,
+                                                                             exchange="Gift",
+                                                                             group="",
+                                                                             comment=_comment,
+                                                                             date=date)
+                # non-null buy AND sell - break into two transactions, booking fees in some way
+                # note: this is because NFTs values in USD won't be known by tokentax
+                elif (not pd.isnull(r.sell_asset)) and (not pd.isnull(r.buy_asset)):
+                    # require everything defined
+                    if pd.isnull(r.sell_qty) or pd.isnull(r.sell_total_usd) or pd.isnull(r.buy_qty) or pd.isnull(r.buy_total_usd):
+                        raise ValueError(f"buy and sell qty and total usd must be non-null for line {line}")
+                    # total fees
+                    fee_qty, fee_currency, fee_hashes = self.safe_get_total_tx_fee_and_currency(r, line)
+                    # append line as a trade
+                    _comment = "Trade. fee_hashes: " + \
+                               str(fee_hashes) + " - " + (str(r.purchased_from) or "")
+                    df_tt.loc[len(df_tt.index)] = Helpers.get_tokentax_array(_type="Trade",
+                                                                             buy_amount=r.buy_qty,
+                                                                             buy_currency=r.buy_asset,
+                                                                             sell_amount=r.sell_qty,
+                                                                             sell_currency=r.sell_asset,
+                                                                             fee_amount=fee_qty,
+                                                                             fee_currency=fee_currency,
+                                                                             exchange="",
+                                                                             group="",
+                                                                             comment=_comment,
+                                                                             date=date)
+                # non-null sell and no buy
+                elif (not pd.isnull(r.sell_asset)) and (pd.isnull(r.buy_asset)):
+                    # require specific things defined
+                    if pd.isnull(r.sell_qty) or pd.isnull(r.sell_total_usd) or (not pd.isnull(r.buy_qty)) or (not pd.isnull(r.buy_total_usd)):
+                        raise ValueError(f"buy and sell qty and totals not appropriate for sell-no-buy on line {line}")
+                    # total fees
+                    fee_qty, fee_currency, fee_hashes = self.safe_get_total_tx_fee_and_currency(r, line)
+                    # append line as a trade
+                    _comment = "Trade. fee_hashes: " + \
+                               str(fee_hashes) + " - " + (str(r.purchased_from) or "")
+                    df_tt.loc[len(df_tt.index)] = Helpers.get_tokentax_array(_type="Trade",
+                                                                             buy_amount=r.sell_total_usd,
+                                                                             buy_currency="USD",
+                                                                             sell_amount=r.sell_qty,
+                                                                             sell_currency=r.sell_asset,
+                                                                             fee_amount=fee_qty,
+                                                                             fee_currency=fee_currency,
+                                                                             exchange="",
+                                                                             group="",
+                                                                             comment=_comment,
+                                                                             date=date)
+                # null sell and non-null buy
+                elif (not pd.isnull(r.buy_asset)) and (pd.isnull(r.sell_asset)):
+                    # require specific things defined
+                    if pd.isnull(r.buy_qty) or pd.isnull(r.buy_total_usd) or (not pd.isnull(r.sell_qty)) or (not pd.isnull(r.sell_total_usd)):
+                        raise ValueError(f"buy and sell qty and totals not appropriate for buy-no-sell on line {line}")
+                    # total fees
+                    fee_qty, fee_currency, fee_hashes = self.safe_get_total_tx_fee_and_currency(r, line)
+                    # append line as a trade
+                    _comment = "Trade. fee_hashes: " + \
+                               str(fee_hashes) + " - " + (str(r.purchased_from) or "")
+                    df_tt.loc[len(df_tt.index)] = Helpers.get_tokentax_array(_type="Trade",
+                                                                             buy_amount=r.buy_qty,
+                                                                             buy_currency=r.buy_asset,
+                                                                             sell_amount=r.buy_total_usd,
+                                                                             sell_currency="USD",
+                                                                             fee_amount=fee_qty,
+                                                                             fee_currency=fee_currency,
+                                                                             exchange="",
+                                                                             group="",
+                                                                             comment=_comment,
+                                                                             date=date)
+                else:
+                    raise ValueError(f"Invalid/unrecognized line on line {line}")
 
-                #
+
+
+
+
+
+
+
                 # populate row at index
                 # df_tt.loc[df_tt.index] = ["Trade", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             except BaseException as err:
