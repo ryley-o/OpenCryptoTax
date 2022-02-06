@@ -9,7 +9,7 @@ def main(_unchecked_input: Path, _sheet_name: str = "input"):
     validator = open_crypto_tax.Validator(_unchecked_input, _sheet_name)
     # process the loaded inputs
     validator.process()
-    print("[INFO] script complete :)")
+    print("[INFO] generate_valid_input complete :)")
 
 
 argvs = sys.argv

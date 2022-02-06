@@ -5,6 +5,8 @@ out/*
 !input/input.example.csv
 !input/utils/*.example.csv
 .env
+*.db
+_txfee_cache.db
 
 # Generic Python gitignore
 # Byte-compiled / optimized / DLL files

@@ -124,29 +124,29 @@ The following is a list of likely "Type" categorization based on TokenTax's spec
 | Condition / situation | TokenTax Type |
 | ----------------------| ------------- |
 | isOrdinaryIncome | Income [0] |
-| mining (business) | Buy [1] | 
+| mining (business) | Trade [1] | 
 | swap/buy/sell | Trade |
 | gas (to be included in basis) | Totals listed in FeeAmount and FeeCurrency [2] [3] |
-| gas-only (not in any basis or trade fee) | Spend |
-| gift (from me to someone else) | Gift [4] |
-| gift (to me from someone else) | Trade [5] |
+| gas-only (not in any basis or trade fee) | Spend [4] |
+| gift (from me to someone else) | Gift [5] |
+| gift (to me from someone else) | Trade [6] |
 
 >[0] includes events such as airdrops, hard forks, hobby mining, staking rewards, claimable LP rewards
 >
->[1] business income tracked elsewhere, but personally treat as buying mined currency
+>[1] business income tracked elsewhere, but personally treat as buying mined currency with USD
 >
 >[2] if multiple fee currencies (e.g. ETH and USD), include USD in basis, making sure to track any asset sales used to pay for gas (e.g. pay ethereum gas fees in ETH *must* be tracked as sale of ETH) 
 >
 >[3] any relevant tx_hash(es) should be listed in comment json { "feeTxHashes": string[] }
 >
->[4] leave buy blank, use sell fields, set exchange as "Gift"
+>[4] spend amount = 0, track gas fees in FeeAmount & FeeCurrency. if multiple currencies, require to be broken up.
 >
->[5] my understanding is that Buy would be gift-giver's cost basis :)
+>[5] leave buy blank, use sell fields, set exchange as "Gift"
+>
+>[6] my understanding is that Buy would be gift-giver's cost basis :)
 >
 >
 >
-
-gas transactions will be noted as 
 
 ## TODO Generate TokenTax Summary + Current Balances
 ```buildoutcfg

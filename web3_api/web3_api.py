@@ -7,6 +7,9 @@ import json
 from collections import defaultdict
 import datetime
 import time
+import pickledb
+
+db = pickledb.load("_txfee_cache.db", False)
 
 EVM_DECIMALS = 1e18  # standard EVM currency has 18 decimals
 
@@ -137,14 +140,25 @@ class Web3Query:
         self.test = "test"
 
     @staticmethod
-    def get_tx_fee(tx_hash: str, chain: str):
+    def get_tx_fee(tx_hash: str, chain: str, convert_to_usd: bool = True, overwrite_cache: bool = False):
         """
         This function returns tx fee in USD given a tx_hash
         :param tx_hash: str hash of tx to retrieve
         :param chain: str indicating which chain to query.
                       supported chains defined in Web3Query.supportedChains
+        :param return_in_usd: bool=True will translate from chain currency to USD if True, otherwise returns
+                      fee in chain fee currency
         :return: transaction fee in usd
         """
+        cache_key = chain + tx_hash + "usd_" + str(convert_to_usd)
+        if (not overwrite_cache):
+            # check if cached value
+            # print("getting key: " + cache_key)
+            _cached_val = db.get(cache_key)
+            if (not _cached_val == False):
+                return _cached_val
+
+
         if chain not in Web3Query.supportedChains:
             raise KeyError(f"RPC for chain {chain} not supported!")
         # get gas used
@@ -153,6 +167,11 @@ class Web3Query:
         gas_price = w3[chain].eth.get_transaction(tx_hash).gasPrice
         # base currency fee
         base_currency_fee = gas_used * gas_price / EVM_DECIMALS
+        if not convert_to_usd:
+            print("caching key: " + cache_key + " to " + str(base_currency_fee))
+            db.set(cache_key, base_currency_fee)
+            db.dump()
+            return base_currency_fee
         # convert to usd via gql dex price at this block
         gas_asset_price_usd = None
         try:
@@ -169,9 +188,11 @@ class Web3Query:
                   "May be a gap in BSC pancakeswap v1 vs. v2 subgraphs. \n" +
                   "If a subgraph issue, please manually fill in gas asset override price in input table.")
             raise e
-        print(gas_asset_price_usd)
-        print(base_currency_fee)
-        return base_currency_fee * gas_asset_price_usd
+        base_currency_fee_usd = base_currency_fee * gas_asset_price_usd
+        print("caching key: " + cache_key + " to " + str(base_currency_fee_usd))
+        db.set(cache_key, base_currency_fee_usd)
+        db.dump()
+        return base_currency_fee_usd
 
     @staticmethod
     def get_token_symbol_and_decimals(addr: str, chain: str):

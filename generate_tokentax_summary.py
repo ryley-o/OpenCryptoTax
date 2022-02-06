@@ -8,12 +8,12 @@ def main(_input_valid: Path, _output_file: Path):
     # new Validator object
     processor = open_crypto_tax.Processor(_input_valid, True)
     # process the loaded inputs
-    processor.process()
+    processor.process_tokentax()
     processor.generate_tokentax_summary(_output_file)
-    print("[INFO] script complete :)")
+    print("[INFO] generate tokentax summary complete (: enjoy!")
 
 
 argvs = sys.argv
 input_valid = Path(argvs[1])
-output_file = Path(argvs[2]) if len(argvs) == 3 else Path("out/output_tokentax_summary.csv")
+output_file = Path(argvs[2]) if len(argvs) == 3 else Path("out/summary_tokentax.csv")
 main(input_valid, output_file)
