@@ -2,6 +2,9 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from web3_api import Web3Query
+from collections import defaultdict
+import csv
+
 
 NUM_GAS_TX_ALLOWED = 14
 
@@ -301,7 +304,6 @@ class Processor:
                 raise ValueError(f"fee_currency is None, but fee_qty is non-zero - HELP!")
         return fee_qty, fee_currency, fee_hashes
 
-
     def process_tokentax(self):
         """
         This processes loaded input data into a tokentax dataframe
@@ -439,27 +441,59 @@ class Processor:
                                                                              comment=_comment,
                                                                              date=date)
                 # non-null buy AND sell - break into two transactions, booking fees in some way
-                # note: this is because NFTs values in USD won't be known by tokentax
+                # note: this is because NFT values in USD won't be known by tokentax
                 elif (not pd.isnull(r.sell_asset)) and (not pd.isnull(r.buy_asset)):
                     # require everything defined
                     if pd.isnull(r.sell_qty) or pd.isnull(r.sell_total_usd) or pd.isnull(r.buy_qty) or pd.isnull(r.buy_total_usd):
                         raise ValueError(f"buy and sell qty and total usd must be non-null for line {line}")
+                    # require book fee with to be either buy or sell
+                    if not (r.book_fee_with == "buy" or r.book_fee_with == "sell"):
+                        raise ValueError(f"BookFeeWith must be 'buy` or `sell` for line {line}")
                     # total fees
                     fee_qty, fee_currency, fee_hashes = self.safe_get_total_tx_fee_and_currency(r, line)
-                    # append line as a trade
-                    _comment = "Trade. fee_hashes: " + \
+                    # append sell line as a trade with USD
+                    if r.book_fee_with == "sell":
+                        _comment = "Trade. fee_hashes: " + \
                                str(fee_hashes) + " - " + (str(r.purchased_from) or "")
+                        _fee_qty = fee_qty
+                        _fee_currency = fee_currency
+                    else:
+                        _comment = "Trade. Fees booked with buy (next line). Swap between two assets split to record best estimate of USD value of assets at time of swap."
+                        _fee_qty = ""
+                        _fee_currency = ""
                     df_tt.loc[len(df_tt.index)] = Helpers.get_tokentax_array(_type="Trade",
-                                                                             buy_amount=r.buy_qty,
-                                                                             buy_currency=r.buy_asset,
+                                                                             buy_amount=r.sell_total_usd,
+                                                                             buy_currency="USD",
                                                                              sell_amount=r.sell_qty,
                                                                              sell_currency=r.sell_asset,
-                                                                             fee_amount=fee_qty,
-                                                                             fee_currency=fee_currency,
+                                                                             fee_amount=_fee_qty,
+                                                                             fee_currency=_fee_currency,
                                                                              exchange="",
                                                                              group="",
                                                                              comment=_comment,
                                                                              date=date)
+                    # append buy line as a trade with USD
+                    if r.book_fee_with == "buy":
+                        _comment = "Trade. fee_hashes: " + \
+                               str(fee_hashes) + " - " + (str(r.purchased_from) or "")
+                        _fee_qty = fee_qty
+                        _fee_currency = fee_currency
+                    else:
+                        _comment = "Trade. Fees booked with sell (previous line). Swap between two assets split to record best estimate of USD value of assets at time of swap."
+                        _fee_qty = ""
+                        _fee_currency = ""
+                    df_tt.loc[len(df_tt.index)] = Helpers.get_tokentax_array(_type="Trade",
+                                                                             buy_amount=r.buy_qty,
+                                                                             buy_currency=r.buy_asset,
+                                                                             sell_amount=r.buy_total_usd,
+                                                                             sell_currency="USD",
+                                                                             fee_amount=_fee_qty,
+                                                                             fee_currency=_fee_currency,
+                                                                             exchange="",
+                                                                             group="",
+                                                                             comment=_comment,
+                                                                             date=date)
+
                 # non-null sell and no buy
                 elif (not pd.isnull(r.sell_asset)) and (pd.isnull(r.buy_asset)):
                     # require specific things defined
@@ -504,20 +538,10 @@ class Processor:
                                                                              date=date)
                 else:
                     raise ValueError(f"Invalid/unrecognized line on line {line}")
-
-
-
-
-
-
-
-
-                # populate row at index
-                # df_tt.loc[df_tt.index] = ["Trade", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             except BaseException as err:
                 print(f"[ERROR] error while processing line {line}")
                 raise
-        # save save output
+        # save output
         self.df_tt = df_tt
 
     def generate_tokentax_summary(self, output_filename: Path = None):
@@ -531,3 +555,34 @@ class Processor:
             raise LookupError("TokenTax summary not generated - call `process_tokentax` method")
         self.df_tt.to_csv(output_filename, index=False)
         print(f"[INFO] validated input file generated: {output_filename}")
+
+    def generate_balances_from_tokentax(self, output_filename: Path):
+        if self.df_tt is None:
+            raise LookupError("TokenTax summary not generated - call `process_tokentax` method")
+        # use a default dict to track all balances - positive and negative
+        dd = defaultdict(float)
+        # total up each asset/currency
+        df_tt = pd.DataFrame(columns=Processor.tokentax_columns)
+        num_rows = self.df.shape[0]
+        for index, row in self.df_tt.iterrows():
+            try:
+                line = index + 2
+                # add buys
+                if not row["BuyCurrency"] == "":
+                    dd[row["BuyCurrency"]] += row["BuyAmount"]
+                # subtract sells
+                if not row["SellCurrency"] == "":
+                    dd[row["SellCurrency"]] -= row["SellAmount"]
+                # subtract fees
+                if not row["FeeCurrency"] == "":
+                    dd[row["FeeCurrency"]] -= row["FeeAmount"]
+            except BaseException as err:
+                print(f"[ERROR] error while processing line {line}")
+                raise
+        # output default dict to file
+        with open(output_filename, 'w') as f:
+            for key, val in dd.items():
+                if not abs(val) < 0.000001:
+                    f.write("%s, %s\n" % (key, val))
+        print(f"[INFO] balances file generated from tokentax summary: {output_filename}")
+

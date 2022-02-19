@@ -150,28 +150,12 @@ The following is a list of likely "Type" categorization based on TokenTax's spec
 >
 >
 
-## TODO Generate Current Balances from tokentax summary
-```buildoutcfg
-python generate_tokentax_summary_with_balances.py ./input/input_valid.csv
-```
-TODO
+## Generate Current Balances from TokenTax summary
+A summary of current balances of every non-zero asset is automatically generated when a
+TokenTax summary is generated.
 
-
-### Generate outputs
-simply run the following command to generate an out.csv and html file based on 
-a populated input file.
-```buildoutcfg
-TODO
-```
-
-
-## TODO List
-(ALL CODE - YAY!)
-- Write code that checks/validates/suggests fixes for input file (maybe excel?)
-- Write code that generates tx output summary for accountant input
-- Write code that generates above + final balances (for checking, and 
-  info that may go into decision making)
-- Write code that tracks & outputs tax liability for a given year, given
+## Possible Future Improvements
+- (currently recommend using TokenTax for this via csv upload and paying a fee) Write code that tracks & outputs tax liability for a given year, given
   tax brackets for that year (not required, but helps quarterly estimates)
 
 ## Other
