@@ -1,0 +1,3 @@
+tx,name,chain,method
+0x00000003b370dd8a59f8fd8cadcc1fe53efd3a6fff58e1e345b9d821dba4c8ae,sushiswap,ETH,Swap ETH For Exact Tokens
+0x12345678a6eb6256ea872557d9eaf9a8b4791412e5e4723a40995fbd48487dce,sushiswap,ETH,Swap Exact Tokens For ETH
