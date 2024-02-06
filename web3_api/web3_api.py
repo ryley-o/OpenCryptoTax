@@ -17,12 +17,12 @@ load_dotenv()  # take environment variables from .env
 w3 = dict()
 HTTP_PROVIDER_ETH: str = os.environ.get("HTTP_PROVIDER_ETH")
 w3["ETH"] = Web3(Web3.HTTPProvider(HTTP_PROVIDER_ETH))
-print(f"Current ETH block number: {w3['ETH'].eth.blockNumber}")
+print(f"Current ETH block number: {w3['ETH'].eth.block_number}")
 HTTP_PROVIDER_BSC: str = os.environ.get("HTTP_PROVIDER_BSC")
 w3["BSC"] = Web3(Web3.HTTPProvider(HTTP_PROVIDER_BSC))
 # remove POA 32-byte extraData field since BSC is POA w/97 bytes
 w3["BSC"].middleware_onion.inject(geth_poa_middleware, layer=0)
-print(f"Current BSC block number: {w3['BSC'].eth.blockNumber}")
+print(f"Current BSC block number: {w3['BSC'].eth.block_number}")
 
 
 def get_abi(filepath):
