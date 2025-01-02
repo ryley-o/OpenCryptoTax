@@ -84,6 +84,9 @@ class Validator:
     def __init__(self, unchecked_input: Path, sheet_name: str = "input", print_preview: bool = False):
         # load input file
         self.df = pd.read_excel(unchecked_input, sheet_name=sheet_name)
+        # Convert all FeeChain columns to strings
+        fee_chain_cols = [col for col in self.df.columns if col.startswith("FeeChain")]
+        self.df[fee_chain_cols] = self.df[fee_chain_cols].astype(str)
         if print_preview:
             print(self.df)
 
